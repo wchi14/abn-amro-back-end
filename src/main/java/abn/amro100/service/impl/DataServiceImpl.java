@@ -1,5 +1,6 @@
 package abn.amro100.service.impl;
 
+import abn.amro100.constant.Constant;
 import abn.amro100.dto.ClientInformationDto;
 import abn.amro100.dto.ProductInformationDto;
 import abn.amro100.dto.RecordDto;
@@ -52,12 +53,14 @@ public class DataServiceImpl implements DataService {
     public void inputData() throws IOException, InvalidSourceFileException {
         List<String> strings = FileUtils.readFileFromResource("/templates/input.txt");
 
-        if (strings.stream().anyMatch(str -> str.length() > 303)) {
+        if (strings.stream().anyMatch(str -> str.length() > Constant.MAX_LENGTH_OF_RECORD)) {
             log.error("The source file have a record exceed 303 characters");
             throw new InvalidSourceFileException();
         }
 
         DataTransformer.transformToTransactionList(strings).forEach(transaction -> {
+            // map to Entity for saving to database
+
             ClientInformation clientInformation = getClientInformation(transaction.clientInformationDto());
 
             ProductInformation productInformation = getProductInformation(transaction.productInformationDto());
@@ -78,6 +81,7 @@ public class DataServiceImpl implements DataService {
                 productInformationDto.expirationDate()
         );
 
+        // Check if database has the product information
         if (productInformationOptional.isEmpty()) {
             ProductInformation productInformation = new ProductInformation();
             productInformation.setExchangeCode(productInformationDto.exchangeCode());
@@ -98,6 +102,7 @@ public class DataServiceImpl implements DataService {
                 clientInformationDto.subAccountNumber()
         );
 
+        // Check if database has the product information
         if (clientInformationOptional.isEmpty()) {
             ClientInformation clientInformation = new ClientInformation();
             clientInformation.setClientType(clientInformationDto.clientType());
